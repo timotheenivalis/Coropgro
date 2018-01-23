@@ -1,0 +1,15 @@
+Package: coropgro
+Type: Package
+Title: Analyze opportunity for selection and population growth rate
+Version: 0.1
+Date: 2017-12-05
+Author: Caroline E. Thomson and Timothée Bonnet
+Maintainer: Complain to <timotheebonnetc@gmail.com>
+Description: This package should help analyse the correlation between the opportunity for selection and population growth rate, and between the trait-specific opportunity for selection and population growth rate. It should assist with analyses starting with raw data, or starting with year-specific estimates.
+License: GPL (>= 2)
+RoxygenNote: 6.0.1
+Encoding: UTF-8
+Imports: stats
+Suggests: knitr,
+    rmarkdown
+VignetteBuilder: knitr

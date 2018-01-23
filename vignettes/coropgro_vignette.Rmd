@@ -1,0 +1,142 @@
+---
+title: "Coropgro Vignette"
+subtitle: "Analysing opportunity for selection and population growth rate"
+author: " Caroline E. Thomson and Timothée Bonnet"
+date: "`r Sys.Date()`"
+output: rmarkdown::html_vignette
+vignette: >
+  %\VignetteIndexEntry{Coropgro Vignette}
+  %\VignetteEngine{knitr::rmarkdown}
+  %\VignetteEncoding{UTF-8}
+---
+
+```{r setup, include = FALSE}
+knitr::opts_chunk$set(
+  collapse = TRUE,
+  comment = "#>"
+)
+```
+
+This vignette demonstrates the use of the package Coropgro, designed to assist in the analysis of opportunity for selection and population growth rate.
+
+We propose three options to contribute to our study:
+
+1. Share raw data . We will use the data only for this study, and will not publish them. We will only publish summary statistics equivalent to option 2, which is
+
+2. Share population growth rate, opportunity for selection and trait-specific opportunity for selection
+
+3. Share the correlations between population growth rate and opportunities for selection, including standard errors
+
+The first option is the most preferable, as we are best able to account for errors and uncertainty. However, we are aware that many researchers may not wish to share raw data, and so we provide other options. Again, option 2 here is preferable to option 3. 
+
+
+# Examples using snow vole data
+
+## Option 1: sharing raw data
+
+There is not much to do, except explaining us precisely how your data work. 
+Ideally, try and format your data similar to the snow vole example provided in the package.
+
+```{r}
+library(coropgro)
+data("svdata")
+knitr::kable(head(svdata))
+```
+
+Please, describe what the variables are:
+
+* What columns are fitness traits, and how these are calculated
+* What columns are phenotypic traits (excluding fitness traits), and what type of selection you think/know they are subject to (e.g. Mating success? Over-winter survival? Clutch-size?...)
+* What covariates should be corrected for when calculating opportunity for selection.
+
+Note that if individual juveniles/offspring are included in the data, the fitness measures on juveniles and adults should be clearly separated. For example, a survival should be contained in two columns - Adult survival (in which adults have survival data, and juveniles are NA); Juvenile survival (in which juveniles have survival data, and adults are NA). 
+
+Additional meta-data, such as species, subspecies, and location should also be provided. If data comes from multiple (non-arbitrary) populations, population identity should be made clear, or should be provided as separate data sets, as each population should be analysed separately.
+
+## Option 2: sharing summary statistics
+
+Snow vole data are included in the package.
+
+```{r}
+library(coropgro)
+data("svdata")
+```
+
+### Population growth rate
+
+The function PopGrowthFromID() computes population growth rate by counting individuals in a data set, from the first year they appear, to the last one.
+
+This might not be the best way to measure population size and population growth rate in a specific system, but it enforces the consistency between individual-level fitness data and population-level data. Actually, the consistency might not be perfect because fitness traits might not be measured for some individuals on some years (between two years when it was measured); but it seems difficult not to include individuals that are for sure part of the population, their artificial re-entry in the population after a year when they are not observed would be unrelated to reproduction and opportunity for selection. 
+
+The function outputs year-to-year population growth rates, from year y to year y+1:
+```{r}
+(lambdas <- PopGrowthFromID(dat = svdata, idname = "ID", yearname = "Year"))
+```
+
+### Opportunities for selection
+
+The function Fiz() computes opportunities for selection, both global and trait-specific. 
+As input, it takes a data frame; the name of the column containing fitness data; the phenotypic traits considered (column names); the name of the column containing year (or the time-step considered); the covariates to correct for (typically age and sex); and the distribution family to be used in a generalized linear model ("gaussian", "poisson", or "binomial").
+Here is an example:
+
+```{r}
+(Opportunities <- Fiz(dat = svdata, fitnesstrait = "FitnessTot", phenotraits = c("Mass", "BL", "TL"), yearname = "Year", covariates = c("Sex", "Age"), family = "poisson"))
+```
+
+As a default, this function will replace missing phenotypic data with the mean population value. This can be changed by passing NAsToMean=FALSE to the function. 
+
+
+### Printing the summary statistics
+
+The function WriteSummaryStats() allows the outputs from the previous two functions to be reformatted into a single dataframe. As an input it requires the data produced by Fiz() and PopGrowthFromID(). As a default, it will write the data directly to a .csv file, within the current working directory. The path and file name can be changed by altering FileName= , or suppressed by write=FALSE. Finally, columns specifying the fitness trait and distribution family can be modified by changing the arguments to fitnesstrait and family. An example is given below:
+
+```{r}
+WriteSummaryStats(Opportunities=Opportunities, PopulationGrowth=lambdas, 
+                  FileName="SummaryStatsIpop.csv", write=TRUE,
+                  fitnesstrait="FitnessTot", family="poisson")
+```
+
+
+### Wrapper: do everything at once
+
+You can wrap the analyses and write the output (from one or multiple fitness traits) to a single file with AnalyseAll().
+
+```{r,results='hide', eval=FALSE}
+AnalyseAll(svdata, fitnesstrait=c("FitnessTot","Phi", "RhoZ"), phenotraits=c("Mass","BL","TL"), 
+           idname="ID", yearname="Year" ,covariates = c("Sex", "Age") , glm_family =c("poisson", "binomial", "poisson"),
+           insertmissing=TRUE, survivalname=NULL, SummaryStatsfiles="SummaryStatsIpop.csv")
+```
+
+
+## Option 3: sharing correlations only
+
+This is the least preferable option, because it gives us less flexibility to deal with estimation uncertainty and might be more error prone.
+
+You will need year-specific population growth rates, and opportunities for selection (straightforward for the "total" opportunity of a fitness trait; less so for a trait-specific opportunity) to compute the correlations we want. The functions presented for Option 2 can be used to calculate the opportunity for selection and population growth rate, and correlations estimated using the function explained below. 
+
+Alternatively, you can use the wrapper function, AnalyseAll(), that starts from raw data, and carries all of the functions to calculate the opportunity for selection, population growth rates, and the correlation between them (described below). 
+
+### Correlations
+
+The results from the two main functions, Fiz() and PopGrowthFromID(), can be combined to obtain several correlations between the opportunities for selection and the population growth rates, using the function AllCorrelations():
+
+```{r}
+allcor <- AllCorrelations(Opportunities = Opportunities, PopulationGrowth = lambdas)
+knitr::kable(allcor, digits = 3)
+
+```
+
+### Wrapper: do everything at once
+
+The function AnalyseAll() computes the correlations between the opportunity for selection and population growth rate and outputs a data frame that can be saved and sent to us (preferably as a .csv file). The correlations can be written directly to a .csv file by specifying a file path under outputfile= . Additionally, the summary of the opportunity for selection and population growth can be output directly to a .csv file (as with WriteSummaryStats() above) by specifying a file path under SummaryStatsfiles= . This function requires the same inputs as Fiz() and PopGrowthFromID(). This includes the option to add in missing data prior to analysis (although this defaults to FALSE). 
+The function will not write the opportunities for selection and population growth rates if you do not provide a non-null argument for the option SummaryStatsfiles.
+
+An example using the snow vole data is given below:
+
+```{r, eval=FALSE}
+ AnalyseAll(svdata, fitnesstrait=c("FitnessTot","Phi", "RhoZ"),
+            phenotraits=c("Mass","BL","TL"), 
+           idname="ID", yearname="Year" ,covariates = c("Sex", "Age") ,
+           glm_family =c("poisson", "binomial", "poisson"),
+           insertmissing=TRUE, survivalname=NULL, outputfile = "SnowVoles.csv")
+```
