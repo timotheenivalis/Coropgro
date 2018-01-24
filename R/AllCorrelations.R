@@ -25,18 +25,22 @@ AllCorrelations <- function(Opportunities, PopulationGrowth)
   
   wt <- sqrt((Opportunities$SampleSizes-1)/2) # inverse of the standard error factor for a variance estimator
   
-  correlations <- data.frame(Opportunity=NA, Correlation=NA, SE=NA)
+  correlations <- data.frame(Opportunity=NA, CorrelationOL=NA, SEOL=NA, CorrelationOIL=NA, SEOIL=NA)#I for inverse lambda
   
   correlations[1,1] <- "Total"
   correlations[1,2:3] <- c(cor_with_se(x = Opportunities$Itot, y = PopulationGrowth, wt = wt))
+  correlations[1,4:5] <- c(cor_with_se(x = Opportunities$Itot, y = 1/PopulationGrowth, wt = wt))
   
   for (i in 1:nrow(Opportunities$iz))
   {
     notNAyears <- which(!is.na(Opportunities$iz[i,]))# there might be missing values for some traits on some years
     correlations[1+i,1] <- rownames(Opportunities$iz)[i]
     correlations[1+i,2:3] <- c(cor_with_se(x = Opportunities$iz[i,notNAyears], 
-                                            y = PopulationGrowth[notNAyears],
-                                            wt = wt[notNAyears]))
+                                           y = PopulationGrowth[notNAyears],
+                                           wt = wt[notNAyears]))
+    correlations[1+i,4:5] <- c(cor_with_se(x = Opportunities$iz[i,notNAyears], 
+                                           y = 1/PopulationGrowth[notNAyears],
+                                           wt = wt[notNAyears]))
   }
   return(correlations)
 }

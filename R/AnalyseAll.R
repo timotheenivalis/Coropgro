@@ -33,8 +33,10 @@ AnalyseAll<-function(dat, fitnesstrait, phenotraits, idname="ID", yearname="Year
   
   cordata<-data.frame(Fitness = rep(fitnesstrait, each=(length(phenotraits)+1)),
                       Opportunity = rep(c("Total",phenotraits), length(fitnesstrait)),
-                      Correlation = rep(NA, length(fitnesstrait)*(length(phenotraits)+1)),
-                      SE = rep(NA, length(fitnesstrait)*(length(phenotraits)+1)),
+                      CorrelationOL = rep(NA, length(fitnesstrait)*(length(phenotraits)+1)),
+                      SEOL = rep(NA, length(fitnesstrait)*(length(phenotraits)+1)),
+                      CorrelationOIL = rep(NA, length(fitnesstrait)*(length(phenotraits)+1)),
+                      SEOIL = rep(NA, length(fitnesstrait)*(length(phenotraits)+1)),
                       glm_family = rep(NA, length(fitnesstrait)*(length(phenotraits)+1)))
   
   if(insertmissing){
@@ -83,8 +85,10 @@ AnalyseAll<-function(dat, fitnesstrait, phenotraits, idname="ID", yearname="Year
     
     AllCor<-AllCorrelations(Opportunities = Opportunities, PopulationGrowth =  PopulationGrowth)
     
-    cordata$Correlation[which(cordata$Fitness==fitnesstrait[i] & cordata$glm_family==fam)]<-AllCor$Correlation
-    cordata$SE[which(cordata$Fitness==fitnesstrait[i] & cordata$glm_family==fam)]<-AllCor$SE
+    cordata$CorrelationOL[which(cordata$Fitness==fitnesstrait[i] & cordata$glm_family==fam)]<-AllCor$CorrelationOL
+    cordata$SEOL[which(cordata$Fitness==fitnesstrait[i] & cordata$glm_family==fam)]<-AllCor$SEOL
+    cordata$CorrelationOIL[which(cordata$Fitness==fitnesstrait[i] & cordata$glm_family==fam)]<-AllCor$CorrelationOIL
+    cordata$SEOIL[which(cordata$Fitness==fitnesstrait[i] & cordata$glm_family==fam)]<-AllCor$SEOIL
   }
   
   if(!is.null(outputfile)){
